@@ -48,7 +48,7 @@ test.beforeAll(async () => {
 
   const mainWin: JSHandle<BrowserWindow> = await electronApp.browserWindow(page)
   await mainWin.evaluate(async (win) => {
-    win.webContents.executeJavaScript('console.log("Execute JavaScript with e2e testing.")')
+    win.webContents.executeJavaScript('console.log("e2e test running")')
   })
 })
 
@@ -68,28 +68,22 @@ test.afterAll(async () => {
   }
 })
 
-test.describe('[electron-vite-react] e2e tests', () => {
-  test('startup', async () => {
+test.describe('AI Chat e2e tests', () => {
+  test('window title is correct', async () => {
     const title = await page.title()
-    expect(title).toBe('Electron + Vite + React')
+    expect(title).toBe('AI Chat')
   })
 
-  test('should be home page is load correctly', async () => {
-    const h1 = await page.$('h1')
-    const title = await h1?.textContent()
-    expect(title).toBe('A sharp starter with Tailwind-first styling.')
+  test('login page loads', async () => {
+    const heading = await page.$('h1')
+    const text = await heading?.textContent()
+    expect(text).toBe('AI Chat')
   })
 
-  test('should be count button can click', async () => {
-    const countButton = await page.$('button:has-text("Increment counter")')
-    const countValue = await page.$('div.text-5xl')
-
-    const valueBeforeClick = await countValue?.textContent()
-    expect(valueBeforeClick).toBe('0')
-
-    await countButton?.click()
-
-    const valueAfterClick = await countValue?.textContent()
-    expect(valueAfterClick).toBe('1')
+  test('login form has email and password fields', async () => {
+    const emailInput = await page.$('input[type="email"]')
+    const passwordInput = await page.$('input[type="password"]')
+    expect(emailInput).not.toBeNull()
+    expect(passwordInput).not.toBeNull()
   })
 })

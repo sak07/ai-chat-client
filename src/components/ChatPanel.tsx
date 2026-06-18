@@ -4,15 +4,20 @@ import { useConversationsStore } from '../stores/conversationsStore'
 import { useChatStore } from '../stores/chatStore'
 
 export function ChatPanel() {
-  const { activeId } = useConversationsStore()
+  const { activeId, justCreatedId, clearJustCreated } = useConversationsStore()
   const { messages, sending, error, loadMessages, sendMessage, clearError } = useChatStore()
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
-    if (activeId) loadMessages(activeId)
-  }, [activeId, loadMessages])
+    if (!activeId) return
+    if (activeId === justCreatedId) {
+      clearJustCreated()
+      return
+    }
+    loadMessages(activeId)
+  }, [activeId, justCreatedId, clearJustCreated, loadMessages])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })

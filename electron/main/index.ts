@@ -2,7 +2,7 @@ import { app, BrowserWindow, shell, ipcMain, safeStorage, session } from 'electr
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import os from 'node:os'
-import { update } from './update'
+import fs from 'node:fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -25,8 +25,12 @@ if (!app.requestSingleInstanceLock()) {
   process.exit(0)
 }
 
-// In-memory encrypted token storage (safeStorage encrypts, Buffer stored in memory only)
-let encryptedToken: Buffer | null = null
+// Encrypted token storage — safeStorage encrypts, persisted to userData so it survives restarts.
+// The file contains opaque encrypted bytes; it is never plaintext on disk.
+const TOKEN_FILE = path.join(app.getPath('userData'), 'session.enc')
+let encryptedToken: Buffer | null = (() => {
+  try { return fs.existsSync(TOKEN_FILE) ? fs.readFileSync(TOKEN_FILE) : null } catch { return null }
+})()
 
 let win: BrowserWindow | null = null
 const preload = path.join(__dirname, '../preload/index.cjs')
@@ -83,17 +87,16 @@ async function createWindow() {
     return { action: 'deny' }
   })
 
-  update(win)
 }
 
 // ── IPC: safeStorage token handlers ──────────────────────────────────────────
 
 ipcMain.handle('token:store', (_event, token: string) => {
   if (!safeStorage.isEncryptionAvailable()) {
-    // Fallback: store nothing — caller should handle gracefully
     throw new Error('safeStorage encryption not available')
   }
   encryptedToken = safeStorage.encryptString(token)
+  fs.writeFileSync(TOKEN_FILE, encryptedToken)
 })
 
 ipcMain.handle('token:get', () => {
@@ -107,6 +110,7 @@ ipcMain.handle('token:get', () => {
 
 ipcMain.handle('token:clear', () => {
   encryptedToken = null
+  try { fs.unlinkSync(TOKEN_FILE) } catch { /* already gone */ }
 })
 
 // ── App lifecycle ─────────────────────────────────────────────────────────────

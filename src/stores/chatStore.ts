@@ -17,6 +17,7 @@ interface ChatState {
   loadMessages: (conversationId: string) => Promise<void>
   sendMessage: (conversationId: string, content: string) => Promise<void>
   clearError: () => void
+  clearMessages: () => void
 }
 
 const MOCK_AI_URL = 'http://localhost:3010/chat'
@@ -31,7 +32,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const userId = pb.authStore.record?.id
       const result = await pb.collection('messages').getList(1, 200, {
-        filter: `conversation_id = "${conversationId}" && user_id = "${userId}"`,
+        filter: `conversation_id = '${conversationId}' && user_id = '${userId}'`,
         sort: 'created',
       })
       set({
@@ -133,4 +134,5 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
+  clearMessages: () => set({ messages: [], error: null }),
 }))

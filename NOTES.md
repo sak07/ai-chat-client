@@ -31,10 +31,6 @@ The app is split into three clear layers:
 - Auto-update — `electron-updater` is a dependency from the boilerplate but not wired up
 - Error logging — errors surface in the UI; file logging not implemented
 
-## Token storage
-
-The auth token is encrypted with Electron's `safeStorage` (OS keychain-backed on Windows/Mac/Linux) and kept only in memory as an encrypted `Buffer`. It is never written to disk in plaintext and never stored in `localStorage` or `sessionStorage`.
-
 ## What I'd do next
 
 1. **Optimistic send + rollback** — add a `pendingIds` set and roll back the user message if PocketBase save fails
@@ -45,6 +41,6 @@ The auth token is encrypted with Electron's `safeStorage` (OS keychain-backed on
 
 ## Self-critique
 
-- The `seed.js` uses the admin API endpoint (`/api/admins/auth-with-password`) which was deprecated in PocketBase v0.23+ in favour of superusers. Depending on the PocketBase version the reviewer uses, the seed script may need updating.
+- **PocketBase binary is not committed.** The binary is OS-specific (~30 MB) and gitignored. The reviewer must download the correct binary for their platform from https://pocketbase.io/docs/ and place it at `pocketbase/pocketbase` (Mac/Linux) or `pocketbase/pocketbase.exe` (Windows) before running `npm run pb:start`. Once the binary is present, all schema setup is automatic via migrations — no admin UI steps required. A proper solution would add a `postinstall` script that downloads the correct binary automatically.
 - The CSP `style-src 'unsafe-inline'` is present because Tailwind v4 injects some inline styles at build time. A stricter approach would use a nonce-based CSP, but that requires additional Vite plugin work.
 - Unit tests mock both PocketBase and `window.api`, which means they test state transitions rather than the full IPC/network stack. A Playwright e2e test would cover the full path.

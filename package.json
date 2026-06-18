@@ -2,7 +2,7 @@
   "name": "ai-chat-desktop-client",
   "version": "0.1.0",
   "private": true,
-  "description": "AI Chat Desktop Client — Electron + Vite + React",
+  "description": "AI Chat Desktop Client",
   "license": "MIT",
   "type": "module",
   "main": "dist-electron/main/index.js",

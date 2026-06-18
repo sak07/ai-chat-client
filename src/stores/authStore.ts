@@ -33,13 +33,21 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null })
     try {
       await pb.collection('users').create({ email, password, passwordConfirm: password })
+    } catch (err: unknown) {
+      const msg = parseError(err)
+      set({ error: msg, loading: false })
+      return
+    }
+    try {
       const auth = await pb.collection('users').authWithPassword(email, password)
       const token = pb.authStore.token
       await window.api.token.store(token)
       set({ user: { id: auth.record.id, email: auth.record.email }, loading: false })
-    } catch (err: unknown) {
-      const msg = parseError(err)
-      set({ error: msg, loading: false })
+    } catch {
+      set({
+        error: 'Account created, but sign-in failed. Email verification may be required — check your inbox, or ask an admin to disable it.',
+        loading: false,
+      })
     }
   },
 

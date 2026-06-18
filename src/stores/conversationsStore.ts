@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { pb } from '../lib/pb'
+import { useChatStore } from './chatStore'
 
 export interface Conversation {
   id: string
@@ -10,6 +11,7 @@ export interface Conversation {
 interface ConversationsState {
   conversations: Conversation[]
   activeId: string | null
+  justCreatedId: string | null
   loading: boolean
   error: string | null
   fetch: () => Promise<void>
@@ -17,11 +19,13 @@ interface ConversationsState {
   rename: (id: string, title: string) => Promise<void>
   remove: (id: string) => Promise<void>
   setActive: (id: string | null) => void
+  clearJustCreated: () => void
 }
 
-export const useConversationsStore = create<ConversationsState>((set, get) => ({
+export const useConversationsStore = create<ConversationsState>((set) => ({
   conversations: [],
   activeId: null,
+  justCreatedId: null,
   loading: false,
   error: null,
 
@@ -30,7 +34,7 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
     try {
       const userId = pb.authStore.record?.id
       const result = await pb.collection('conversations').getList(1, 100, {
-        filter: `user_id = "${userId}"`,
+        filter: `user_id = '${userId}'`,
         sort: '-created',
       })
       set({ conversations: result.items as unknown as Conversation[], loading: false })
@@ -44,7 +48,8 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
       const userId = pb.authStore.record?.id
       const record = await pb.collection('conversations').create({ user_id: userId, title })
       const conv: Conversation = { id: record.id, title: record['title'], created: record.created }
-      set((s) => ({ conversations: [conv, ...s.conversations], activeId: conv.id }))
+      useChatStore.getState().clearMessages()
+      set((s) => ({ conversations: [conv, ...s.conversations], activeId: conv.id, justCreatedId: conv.id }))
     } catch {
       set({ error: 'Failed to create conversation' })
     }
@@ -76,5 +81,6 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
     }
   },
 
-  setActive: (id) => set({ activeId: id }),
+  setActive: (id) => set({ activeId: id, justCreatedId: null }),
+  clearJustCreated: () => set({ justCreatedId: null }),
 }))
