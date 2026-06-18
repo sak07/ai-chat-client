@@ -37,7 +37,14 @@ export const useConversationsStore = create<ConversationsState>((set) => ({
         filter: `user_id = '${userId}'`,
         sort: '-created',
       })
-      set({ conversations: result.items as unknown as Conversation[], loading: false })
+      const conversations = result.items as unknown as Conversation[]
+      set((s) => ({
+        conversations,
+        loading: false,
+        activeId: conversations.length === 0
+          ? null
+          : s.activeId ?? conversations[0].id,
+      }))
     } catch {
       set({ error: 'Failed to load conversations', loading: false })
     }

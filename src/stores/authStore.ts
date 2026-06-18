@@ -83,9 +83,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 function parseError(err: unknown): string {
   if (err && typeof err === 'object') {
     const e = err as { status?: number; message?: string; response?: { message?: string } }
-    if (e.status === 0) return 'Cannot reach server. Is PocketBase running?'
+    if (e.status === 0) return 'Cannot reach server. Check your connection and try again.'
+    if (e.status === 400 || e.status === 401 || e.status === 403) {
+      return 'Invalid email or password.'
+    }
+    if (e.status === 404) return 'No account found with that email.'
     if (e.response?.message) return e.response.message
     if (e.message) return e.message
   }
-  return 'Something went wrong'
+  return 'Something went wrong. Please try again.'
 }
